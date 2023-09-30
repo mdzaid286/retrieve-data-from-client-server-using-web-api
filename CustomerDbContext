@@ -1,0 +1,25 @@
+using Microsoft.EntityFrameworkCore;
+
+namespace Testing1.Models
+{
+    public class CustomerContext : DbContext
+    {
+        public CustomerContext(DbContextOptions<CustomerContext> options) : base(options) { }
+
+        public DbSet<Customers> Customers { get; set; }
+        public DbSet<Orders> Orders { get; set; }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // Configure the Customer and Order models and their relationship here
+            modelBuilder.Entity<Customers>()
+                .HasMany(c => c.Orders)
+                .WithOne(o => o.Customer)
+                .HasForeignKey(o => o.CustomerId);
+
+            // You can further configure your models or relationships as needed
+
+            base.OnModelCreating(modelBuilder);
+        }
+
+    }
+}
