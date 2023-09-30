@@ -1,0 +1,59 @@
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Testing1.Models;
+
+namespace Testing1.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class OrdersController : ControllerBase
+    {
+        private readonly CustomerContext _context;
+
+        public OrdersController(CustomerContext context)
+        {
+            _context = context;
+        }
+
+        // GET: api/orders/customer/{customerId}
+        [HttpGet("customer/{customerId}")]
+        public IActionResult GetOrdersByCustomer(int customerId)
+        {
+            var orders = _context.Orders
+                .Where(o => o.CustomerId == customerId)
+                .ToList();
+
+            if (orders == null || orders.Count == 0)
+            {
+                return NotFound();
+            }
+
+            return Ok(orders);
+        }
+        [HttpGet("summary")]
+        [HttpGet("ordersummary")]
+        public IActionResult GetCustomerOrderSummary()
+        {
+            try
+            {
+                var customerOrderSummary = _context.Customers
+                    .Include(c => c.Orders)
+                    .OrderBy(c => c.Country)
+                    .Select(c => new
+                    {
+                        CustomerId = c.Id,
+                        Country = c.Country,
+                        TotalOrders = c.Orders.Count(),
+                        TotalAmount = c.Orders.Sum(o => o.Amount)
+                    })
+                    .ToList();
+
+                return Ok(customerOrderSummary);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+}
